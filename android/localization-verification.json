@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-09",
+  "version": "1.0.3-zh4",
+  "apk_sha256": "69dd437192475a198adbdaf81cb786690a747b71ac28604565767e790e03e0ae",
+  "desktop_same_source_checked": true,
+  "android_device_tested": false,
+  "test_render_scale": 4,
+  "test_data_directory": "verification-data/graphics-test/",
+  "original_purchase_cancel_callbacks_observed": 2,
+  "battle_continued_after_purchase_taps": true,
+  "initial_right_side_icons_visually_checked": [
+    "MachineGun",
+    "Missile",
+    "Tanker",
+    "RifleTurret"
+  ],
+  "skill_icons_visually_checked": 3,
+  "base_menu_first_seconds_before": 6.5243708,
+  "base_menu_first_seconds_after": 3.0003342999999996,
+  "base_menu_reopen_seconds": 1.1575088,
+  "base_menu_sample_pixel_mean_error": 0.0,
+  "runtime_patch_sha256": "ed7eca0d94f4c9ff66f712883093bfbf0e1752cfd686e41251d1cc911497e15c",
+  "screenshots": [
+    "zh4-final-battle.png",
+    "zh4-final-shop-1.png",
+    "zh4-final-shop-2.png",
+    "zh4-final-base.png",
+    "zh4-final-base-warm.png",
+    "zh4-final-skills.png"
+  ]
+}

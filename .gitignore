@@ -1,0 +1,31 @@
+# Downloaded games, toolchains and reference projects
+/original/
+/*.ipa
+/*.zip
+/reference/hm-defense/
+/reference/*.zip
+/reference/touchHLE/target/
+/verification-data/
+/.publish/
+/tools/*/
+
+# Generated packages and local player data
+*.apk
+*.keystore
+*.jks
+*.sav
+*.log
+*.pdb
+*.o
+__pycache__/
+*.pyc
+/android/build/
+/android/releases/
+/android/project/jniLibs/
+/windows/game/
+/windows/HeavyMachDefense.exe
+/windows/runtime/*
+!/windows/runtime/SOURCE.md
+!/windows/runtime/compatibility.patch
+!/windows/runtime/source-support/
+touchHLE_sandbox/

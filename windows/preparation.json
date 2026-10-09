@@ -1,0 +1,33 @@
+{
+  "input": "MachDefense v1.0.3 - (com.wemadeent.HeavyMachDefence).ipa",
+  "input_sha256": "882fe8efa9a0c3d51c23da190ee3d30376a1b6766e16cc6b87daf09b98dc92b1",
+  "bundle": "com.wemadeent.HeavyMachDefence",
+  "version": "1.0.3",
+  "minimum_ios": "4.3",
+  "changes": [
+    {
+      "files": 94,
+      "change": "Decrypt QTable resources with verified Darwin random() sequence"
+    },
+    {
+      "file": "MainWindow.nib",
+      "change": "Decode obsolete iAd banner as an empty UITextField"
+    },
+    {
+      "file": "MainWindow_iPhone.nib",
+      "change": "Decode obsolete iAd banner as an empty UITextField"
+    },
+    {
+      "file": "Info.plist",
+      "change": "Use upright portrait orientation"
+    },
+    {
+      "file": "MachDefense",
+      "change": "NEW creates an original save slot named Player without unsupported UIAlertView text input"
+    },
+    {
+      "file": "MachDefense",
+      "change": "Disable obsolete iAd animations and WeMade banner request/update callbacks"
+    }
+  ]
+}

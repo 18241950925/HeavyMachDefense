@@ -1,0 +1,18 @@
+{
+  "upstream": "https://github.com/touchHLE/touchHLE",
+  "upstream_base": "d34530b52174e8a4f1fe43178cc4fb0c99506f9f",
+  "local_commit": "7d383d88c4854870835b1a2e4df2ce1b42f481b3",
+  "full_local_source": "reference/touchHLE",
+  "runtime_patch": "touchHLE.patch",
+  "android_launcher": "android/project",
+  "signing_key_included": false,
+  "font_source": {
+    "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
+    "source_sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+    "weights": [
+      500,
+      700
+    ],
+    "coverage": "GB2312, Latin and runtime captions"
+  }
+}

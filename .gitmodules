@@ -1,0 +1,12 @@
+[submodule "reference/touchHLE/vendor/SDL"]
+	path = reference/touchHLE/vendor/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "reference/touchHLE/vendor/dynarmic"]
+	path = reference/touchHLE/vendor/dynarmic
+	url = https://github.com/touchHLE/dynarmic.git
+[submodule "reference/touchHLE/vendor/openal-soft"]
+	path = reference/touchHLE/vendor/openal-soft
+	url = https://github.com/kcat/openal-soft
+[submodule "reference/touchHLE/vendor/stb"]
+	path = reference/touchHLE/vendor/stb
+	url = https://github.com/nothings/stb.git

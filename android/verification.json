@@ -1,0 +1,43 @@
+{
+  "apk_sha256": "69dd437192475a198adbdaf81cb786690a747b71ac28604565767e790e03e0ae",
+  "apk_size": 93228700,
+  "min_android_api": 21,
+  "target_android_api": 32,
+  "abi": "arm64-v8a",
+  "game_sha256": "dd8729a650c0d0d2d79918b080239c2568dbe738e43824de819739bd0b7209e5",
+  "bundled_game_matches_prepared_windows_game": true,
+  "native_libraries": {
+    "libtouchHLE.so": {
+      "sha256": "ee83f1f5e8d93c6e340ea70332b73ad7b84d3a44a326c490cc8e335b1fe0fcb1",
+      "machine": "AArch64",
+      "load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ]
+    },
+    "libc++_shared.so": {
+      "sha256": "cd61762848882a16c8244c964a6f396c0caa0b440588a210ce9cc4ab0e6d9f0c",
+      "machine": "AArch64",
+      "load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ]
+    },
+    "libSDL2.so": {
+      "sha256": "d3b65613f2093f899fdf924611752078138d3af04ee8c9e35a6ffd665a884741",
+      "machine": "AArch64",
+      "load_alignments": [
+        16384,
+        16384,
+        16384
+      ]
+    }
+  },
+  "signature_verification": "Verifies\nVerified using v1 scheme (JAR signing): true\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): true\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\nSigner #1 certificate DN: CN=Local Heavy MACH Defense Build\nSigner #1 certificate SHA-256 digest: 4ea368d2e1efd7c52aa3bf22327cdb2fd9e6f2111747ce7df0fc5bd0dbdf2f12\nSigner #1 certificate SHA-1 digest: 062d97936a63aa4b82f00bea9d4f3e69ff10944e\nSigner #1 certificate MD5 digest: 7047bafe5e2c12f1d8d3524e7ac2a04f\nSigner #1 key algorithm: RSA\nSigner #1 key size (bits): 2048\nSigner #1 public key SHA-256 digest: 5dc473d53478250fb47b224eb0ddcd924934495d9731dcdf688f1506b1d9e9d2\nSigner #1 public key SHA-1 digest: 170d2a006d471b842fc95c105a182ed27ff96418\nSigner #1 public key MD5 digest: 86f2bdc71dff07e5cbb11fd134794666",
+  "apk_16kb_alignment_verified": true,
+  "device_tested": false
+}

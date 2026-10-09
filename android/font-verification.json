@@ -1,0 +1,18 @@
+{
+  "chinese_characters_verified": 281,
+  "apk_sha256": "69dd437192475a198adbdaf81cb786690a747b71ac28604565767e790e03e0ae",
+  "fonts": {
+    "MechSansSC-Medium.ttf": {
+      "missing": [],
+      "size": 2311304,
+      "sha256": "d545122a049cccbfdf7a63a1a967d2b2d74056e2188bd40dc66a2f50e8324e71",
+      "apk_matches": true
+    },
+    "MechSansSC-Bold.ttf": {
+      "missing": [],
+      "size": 2311548,
+      "sha256": "d4d00bbc980824f2fc419829ae6c21b8c70dd15cd483a42a642987f43c386248",
+      "apk_matches": true
+    }
+  }
+}

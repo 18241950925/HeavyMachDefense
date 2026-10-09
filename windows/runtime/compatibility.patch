@@ -1,0 +1,465 @@
+diff --git a/src/frameworks/core_animation/ca_display_link.rs b/src/frameworks/core_animation/ca_display_link.rs
+index 0c8533c..f6ce4b8 100644
+--- a/src/frameworks/core_animation/ca_display_link.rs
++++ b/src/frameworks/core_animation/ca_display_link.rs
+@@ -64,7 +64,8 @@ pub const CLASSES: ClassExports = objc_classes! {
+ 
+ - (())setFrameInterval:(NSInteger)frameInterval {
+     log_dbg!("[(CADisplayLink*){:?} setFrameInterval:{}]", this, frameInterval);
+-    assert!(frameInterval >= 1);
++    // Some early apps pass zero when they want the default refresh cadence.
++    let frameInterval = frameInterval.max(1);
+     let interval = frameInterval as f64 / 60.0;
+     let ns_timer = env.objc.borrow::<CADisplayLinkHostObject>(this).ns_timer;
+     set_time_interval(env, ns_timer, interval);
+diff --git a/src/frameworks/core_graphics/cg_context.rs b/src/frameworks/core_graphics/cg_context.rs
+index 897e267..5f4b410 100644
+--- a/src/frameworks/core_graphics/cg_context.rs
++++ b/src/frameworks/core_graphics/cg_context.rs
+@@ -23,6 +23,7 @@ use crate::frameworks::uikit;
+ use crate::mem::{ConstPtr, GuestUSize};
+ use crate::objc::{objc_classes, ClassExports, HostObject};
+ use crate::Environment;
++use crate::font::Font;
+ 
+ type CGInterpolationQuality = i32;
+ 
+@@ -265,6 +266,9 @@ pub fn CGContextDrawImage(
+     rect: CGRect,
+     image: CGImageRef,
+ ) {
++    if context.is_null() || image.is_null() {
++        return;
++    }
+     cg_bitmap_context::draw_image(env, context, rect, image);
+ }
+ 
+@@ -330,6 +334,55 @@ fn CGContextSetFont(env: &mut Environment, context: CGContextRef, font: CGFontRe
+     env.objc.borrow_mut::<CGContextHostObject>(context).font = font;
+ }
+ 
++fn CGContextSelectFont(
++    env: &mut Environment,
++    context: CGContextRef,
++    name: ConstPtr<u8>,
++    size: CGFloat,
++    _encoding: u32,
++) {
++    let name = String::from_utf8_lossy(env.mem.cstr_at(name)).to_lowercase();
++    let bold = name.contains("bold");
++    let font = if name.contains("courier") || name.contains("mono") {
++        if bold { Font::mono_bold() } else { Font::mono_regular() }
++    } else if name.contains("times") || name.contains("serif") {
++        if bold { Font::serif_bold() } else { Font::serif_regular() }
++    } else if bold {
++        Font::sans_bold()
++    } else {
++        Font::sans_regular()
++    };
++    let class = env.objc.get_known_class("_touchHLE_CGFont", &mut env.mem);
++    let font = env.objc.alloc_object(class, Box::new(CGFontHostObject { font }), &mut env.mem);
++    CGContextSetFont(env, context, font);
++    CGContextSetFontSize(env, context, size);
++    CGFontRelease(env, font);
++}
++
++fn CGContextShowTextAtPoint(
++    env: &mut Environment,
++    context: CGContextRef,
++    x: CGFloat,
++    y: CGFloat,
++    text: ConstPtr<u8>,
++    length: GuestUSize,
++) {
++    if length == 0 {
++        return;
++    }
++    // The legacy game uses this API for its English labels and numbers.
++    let bytes = env.mem.bytes_at(text, length);
++    let font = env.objc.borrow::<CGContextHostObject>(context).font;
++    let font = &env.objc.borrow::<CGFontHostObject>(font).font;
++    let glyphs: Vec<u16> = bytes.iter().map(|&ch| font.glyph_id_for_char(ch as u16).0).collect();
++    let pointer = env.mem.alloc(length * 2);
++    for (index, glyph) in glyphs.iter().enumerate() {
++        env.mem.write(pointer.cast::<u16>() + index as u32, *glyph);
++    }
++    CGContextShowGlyphsAtPoint(env, context, x, y, pointer.cast_const().cast(), length);
++    env.mem.free(pointer);
++}
++
+ fn CGContextSetFontSize(env: &mut Environment, context: CGContextRef, size: CGFloat) {
+     env.objc
+         .borrow_mut::<CGContextHostObject>(context)
+@@ -429,6 +482,8 @@ fn CGContextShowGlyphsAtPositions(
+ }
+ 
+ pub const FUNCTIONS: FunctionExports = &[
++    export_c_func!(CGContextSelectFont(_, _, _, _)),
++    export_c_func!(CGContextShowTextAtPoint(_, _, _, _, _)),
+     export_c_func!(CGContextRetain(_)),
+     export_c_func!(CGContextRelease(_)),
+     export_c_func!(CGContextSetBlendMode(_, _)),
+diff --git a/src/frameworks/core_graphics/cg_image.rs b/src/frameworks/core_graphics/cg_image.rs
+index a6b936a..41cf109 100644
+--- a/src/frameworks/core_graphics/cg_image.rs
++++ b/src/frameworks/core_graphics/cg_image.rs
+@@ -221,6 +221,10 @@ fn CGImageGetColorSpace(env: &mut Environment, _image: CGImageRef) -> CGColorSpa
+ }
+ 
+ pub fn CGImageGetWidth(env: &mut Environment, image: CGImageRef) -> GuestUSize {
++    if image == nil {
++        // Legacy atlas builders also query absent sprite images.
++        return 0;
++    }
+     let (width, _height) = env
+         .objc
+         .borrow::<CGImageHostObject>(image)
+@@ -229,6 +233,9 @@ pub fn CGImageGetWidth(env: &mut Environment, image: CGImageRef) -> GuestUSize {
+     width
+ }
+ pub fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
++    if image == nil {
++        return 0;
++    }
+     let (_width, height) = env
+         .objc
+         .borrow::<CGImageHostObject>(image)
+diff --git a/src/frameworks/foundation.rs b/src/frameworks/foundation.rs
+index 441c507..081239b 100644
+--- a/src/frameworks/foundation.rs
++++ b/src/frameworks/foundation.rs
+@@ -50,6 +50,7 @@ pub mod ns_run_loop;
+ pub mod ns_scanner;
+ pub mod ns_set;
+ pub mod ns_string;
++pub mod ns_stream;
+ pub mod ns_thread;
+ pub mod ns_time_zone;
+ pub mod ns_timer;
+@@ -96,6 +97,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+         ns_scanner::CLASSES,
+         ns_set::CLASSES,
+         ns_string::CLASSES,
++        ns_stream::CLASSES,
+         ns_thread::CLASSES,
+         ns_timer::CLASSES,
+         ns_time_zone::CLASSES,
+diff --git a/src/frameworks/foundation/ns_array.rs b/src/frameworks/foundation/ns_array.rs
+index d89008a..9407cba 100644
+--- a/src/frameworks/foundation/ns_array.rs
++++ b/src/frameworks/foundation/ns_array.rs
+@@ -214,6 +214,14 @@ pub const CLASSES: ClassExports = objc_classes! {
+     autorelease(env, array_imm)
+ }
+ 
++- (id)sortedArrayUsingSelector:(SEL)comparator {
++    let array: id = msg![env; this mutableCopy];
++    () = msg![env; array sortUsingSelector:comparator];
++    let result: id = msg![env; array copy];
++    release(env, array);
++    autorelease(env, result)
++}
++
+ - (NSUInteger)hash {
+     // TODO: define better hash
+     msg![env; this count]
+@@ -339,6 +347,18 @@ pub const CLASSES: ClassExports = objc_classes! {
+     }
+ }
+ 
++- (())removeObjectsInArray:(id)other { // NSArray*
++    // Snapshot the argument so removing from self also works when the two
++    // arrays are identical or share their elements.
++    let snapshot: id = msg![env; other copy];
++    let count: NSUInteger = msg![env; snapshot count];
++    for index in 0..count {
++        let object: id = msg![env; snapshot objectAtIndex:index];
++        () = msg![env; this removeObject:object];
++    }
++    release(env, snapshot);
++}
++
+ // NSCopying implementation
+ - (id)copyWithZone:(NSZonePtr)_zone {
+     let other: id = msg_class![env; NSArray alloc];
+diff --git a/src/frameworks/uikit/ui_graphics.rs b/src/frameworks/uikit/ui_graphics.rs
+index e212463..7767819 100644
+--- a/src/frameworks/uikit/ui_graphics.rs
++++ b/src/frameworks/uikit/ui_graphics.rs
+@@ -7,14 +7,56 @@
+ 
+ use crate::dyld::{export_c_func, FunctionExports};
+ use crate::frameworks::core_graphics::cg_context::{
+-    CGContextRef, CGContextRelease, CGContextRetain,
++    CGContextRef, CGContextRelease, CGContextRetain, CGContextScaleCTM, CGContextTranslateCTM,
+ };
+-use crate::objc::nil;
++use crate::frameworks::core_graphics::cg_bitmap_context::{CGBitmapContextCreate, CGBitmapContextCreateImage};
++use crate::frameworks::core_graphics::cg_color_space::{CGColorSpaceCreateDeviceRGB, CGColorSpaceRelease};
++use crate::frameworks::core_graphics::cg_image::{CGImageRelease, kCGImageAlphaPremultipliedLast};
++use crate::frameworks::core_graphics::CGSize;
++use crate::mem::Ptr;
++use crate::objc::{autorelease, id, msg, msg_class, nil};
+ use crate::Environment;
+ 
+ #[derive(Default)]
+ pub(super) struct State {
+     pub(super) context_stack: Vec<CGContextRef>,
++    image_contexts: Vec<CGContextRef>,
++}
++
++pub fn UIGraphicsBeginImageContext(env: &mut Environment, size: CGSize) {
++    let width = size.width.ceil().max(1.0) as u32;
++    let height = size.height.ceil().max(1.0) as u32;
++    let color_space = CGColorSpaceCreateDeviceRGB(env);
++    let context = CGBitmapContextCreate(
++        env, Ptr::null(), width, height, 8, width * 4, color_space,
++        kCGImageAlphaPremultipliedLast,
++    );
++    CGColorSpaceRelease(env, color_space);
++    CGContextTranslateCTM(env, context, 0.0, height as f32);
++    CGContextScaleCTM(env, context, 1.0, -1.0);
++    UIGraphicsPushContext(env, context);
++    env.framework_state.uikit.ui_graphics.image_contexts.push(context);
++}
++
++pub fn UIGraphicsGetImageFromCurrentImageContext(env: &mut Environment) -> id {
++    let context = UIGraphicsGetCurrentContext(env);
++    if context == nil {
++        return nil;
++    }
++    let cg_image = CGBitmapContextCreateImage(env, context);
++    let image: id = msg_class![env; UIImage alloc];
++    let image: id = msg![env; image initWithCGImage:cg_image];
++    CGImageRelease(env, cg_image);
++    autorelease(env, image)
++}
++
++pub fn UIGraphicsEndImageContext(env: &mut Environment) {
++    let context = env.framework_state.uikit.ui_graphics.image_contexts.pop();
++    if let Some(context) = context {
++        assert_eq!(UIGraphicsGetCurrentContext(env), context);
++        UIGraphicsPopContext(env);
++        CGContextRelease(env, context);
++    }
+ }
+ 
+ pub fn UIGraphicsPushContext(env: &mut Environment, context: CGContextRef) {
+@@ -40,6 +82,9 @@ pub fn UIGraphicsGetCurrentContext(env: &mut Environment) -> CGContextRef {
+ }
+ 
+ pub const FUNCTIONS: FunctionExports = &[
++    export_c_func!(UIGraphicsBeginImageContext(_)),
++    export_c_func!(UIGraphicsGetImageFromCurrentImageContext()),
++    export_c_func!(UIGraphicsEndImageContext()),
+     export_c_func!(UIGraphicsPushContext(_)),
+     export_c_func!(UIGraphicsPopContext()),
+     export_c_func!(UIGraphicsGetCurrentContext()),
+diff --git a/src/frameworks/uikit/ui_screen.rs b/src/frameworks/uikit/ui_screen.rs
+index 840d763..014b880 100644
+--- a/src/frameworks/uikit/ui_screen.rs
++++ b/src/frameworks/uikit/ui_screen.rs
+@@ -6,7 +6,7 @@
+ //! `UIScreen`.
+ 
+ use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+-use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, TrivialHostObject};
++use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, SEL, TrivialHostObject};
+ 
+ #[derive(Default)]
+ pub struct State {
+@@ -74,6 +74,10 @@ pub const CLASSES: ClassExports = objc_classes! {
+     1.0
+ }
+ 
++- (id)displayLinkWithTarget:(id)target selector:(SEL)selector {
++    msg_class![env; CADisplayLink displayLinkWithTarget:target selector:selector]
++}
++
+ @end
+ 
+ };
+diff --git a/src/libc/stdio/printf.rs b/src/libc/stdio/printf.rs
+index 951dfb3..0e647c9 100644
+--- a/src/libc/stdio/printf.rs
++++ b/src/libc/stdio/printf.rs
+@@ -291,28 +291,28 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
+                 } else {
+                     format!("{int}")
+                 };
++                // The game uses %+d for base upgrade bonuses. A sign also
++                // counts toward field width; zero padding follows the sign.
++                let signed = prepend_sign && specifier != b'u';
++                let int_with_sign = if signed && int >= 0 {
++                    format!("+{int_with_precision}")
++                } else {
++                    int_with_precision
++                };
+ 
+                 if pad_width > 0 {
+                     let pad_width = pad_width as usize;
+                     if pad_char == '0' && precision.is_none() {
+-                        if prepend_sign {
+-                            assert!(int != 0); // TODO
+-                            assert!(pad_width > 0);
+-                            if int > 0 {
+-                                write!(&mut res, "+{:0>1$}", int, pad_width - 1).unwrap();
+-                            } else {
+-                                write!(&mut res, "-{:0>1$}", int.abs(), pad_width - 1).unwrap();
+-                            }
++                        if signed {
++                            write!(&mut res, "{int:+0pad_width$}").unwrap();
+                         } else {
+-                            write!(&mut res, "{int:0>pad_width$}").unwrap();
++                            write!(&mut res, "{int:0pad_width$}").unwrap();
+                         }
+                     } else {
+-                        assert!(!prepend_sign);
+-                        write!(&mut res, "{int_with_precision:>pad_width$}").unwrap();
++                        write!(&mut res, "{int_with_sign:>pad_width$}").unwrap();
+                     }
+                 } else {
+-                    assert!(!prepend_sign);
+-                    res.extend_from_slice(int_with_precision.as_bytes());
++                    res.extend_from_slice(int_with_sign.as_bytes());
+                 }
+             }
+             b'@' if NS_LOG => {
+diff --git a/src/libc/stdlib.rs b/src/libc/stdlib.rs
+index 8c51b73..704df91 100644
+--- a/src/libc/stdlib.rs
++++ b/src/libc/stdlib.rs
+@@ -27,6 +27,23 @@ pub struct State {
+     fcvt_buf: Option<MutPtr<u8>>,
+ }
+ 
++fn __assert_rtn(
++    env: &mut Environment,
++    function: ConstPtr<u8>,
++    file: ConstPtr<u8>,
++    line: i32,
++    expression: ConstPtr<u8>,
++) {
++    let function = if function.is_null() {
++        "(anonymous)".into()
++    } else {
++        String::from_utf8_lossy(env.mem.cstr_at(function))
++    };
++    let file = String::from_utf8_lossy(env.mem.cstr_at(file));
++    let expression = String::from_utf8_lossy(env.mem.cstr_at(expression));
++    panic!("Guest assertion failed: {expression}, function {function}, file {file}, line {line}");
++}
++
+ // Sizes of zero are implementation-defined. macOS will happily give you back
+ // an allocation for any of these, so presumably iPhone OS does too.
+ // (touchHLE's allocator will round up allocations to at least 16 bytes.)
+@@ -656,6 +673,7 @@ fn fcvt(
+ }
+ 
+ pub const FUNCTIONS: FunctionExports = &[
++    export_c_func!(__assert_rtn(_, _, _, _)),
+     export_c_func!(malloc(_)),
+     export_c_func!(malloc_size(_)),
+     export_c_func!(calloc(_, _)),
+diff --git a/src/objc/objects.rs b/src/objc/objects.rs
+index 60b20ca..45c3cf8 100644
+--- a/src/objc/objects.rs
++++ b/src/objc/objects.rs
+@@ -243,7 +243,9 @@ impl super::ObjC {
+     /// no such object, or if downcasting fails.
+     pub fn borrow<T: AnyHostObject + 'static>(&self, object: id) -> &T {
+         let mut host_object: &(dyn AnyHostObject + 'static) =
+-            &*self.objects.get(&object).unwrap().host_object;
++            &*self.objects.get(&object).unwrap_or_else(|| {
++                panic!("Missing host object {object:?} for type {}", std::any::type_name::<T>())
++            }).host_object;
+         loop {
+             if let Some(res) = host_object.as_any().downcast_ref() {
+                 return res;
+diff --git a/src/frameworks/foundation/ns_stream.rs b/src/frameworks/foundation/ns_stream.rs
+new file mode 100644
+--- /dev/null
++++ b/src/frameworks/foundation/ns_stream.rs
+@@ -0,0 +1,82 @@
++/*
++ * This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
++ */
++//! Synchronous file output streams used by legacy game save writers.
++
++use super::{ns_string, NSInteger, NSUInteger};
++use crate::fs::GuestPath;
++use crate::mem::ConstPtr;
++use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
++
++struct OutputStreamHostObject {
++    path: String,
++    append: bool,
++    bytes: Vec<u8>,
++    opened: bool,
++}
++impl HostObject for OutputStreamHostObject {}
++
++pub const CLASSES: ClassExports = objc_classes! {
++
++(env, this, _cmd);
++
++@implementation NSStream: NSObject
++@end
++
++@implementation NSOutputStream: NSStream
++
+++ (id)outputStreamToFileAtPath:(id)path append:(bool)append {
++    let path = ns_string::to_rust_string(env, path).into_owned();
++    let stream = OutputStreamHostObject { path, append, bytes: Vec::new(), opened: false };
++    let object = env.objc.alloc_object(this, Box::new(stream), &mut env.mem);
++    autorelease(env, object)
++}
++
++- (())open {
++    let stream = env.objc.borrow::<OutputStreamHostObject>(this);
++    let path = stream.path.clone();
++    let append = stream.append;
++    let bytes = if append {
++        env.fs.read(GuestPath::new(&path)).unwrap_or_default()
++    } else {
++        Vec::new()
++    };
++    let opened = env.fs.write(GuestPath::new(&path), &bytes).is_ok();
++    let stream = env.objc.borrow_mut::<OutputStreamHostObject>(this);
++    stream.bytes = bytes;
++    stream.opened = opened;
++}
++
++- (NSInteger)write:(ConstPtr<u8>)buffer maxLength:(NSUInteger)length {
++    if !env.objc.borrow::<OutputStreamHostObject>(this).opened {
++        return -1;
++    }
++    let bytes = env.mem.bytes_at(buffer, length).to_vec();
++    let stream = env.objc.borrow_mut::<OutputStreamHostObject>(this);
++    stream.bytes.extend_from_slice(&bytes);
++    let path = stream.path.clone();
++    let contents = stream.bytes.clone();
++    if env.fs.write(GuestPath::new(&path), &contents).is_err() {
++        env.objc.borrow_mut::<OutputStreamHostObject>(this).opened = false;
++        return -1;
++    }
++    length as NSInteger
++}
++
++- (())close {
++    env.objc.borrow_mut::<OutputStreamHostObject>(this).opened = false;
++}
++
++- (bool)hasSpaceAvailable {
++    env.objc.borrow::<OutputStreamHostObject>(this).opened
++}
++
++- (())dealloc {
++    env.objc.dealloc_object(this, &mut env.mem);
++}
++
++@end
++
++};
