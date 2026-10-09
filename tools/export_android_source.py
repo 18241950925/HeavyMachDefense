@@ -15,6 +15,11 @@ def git(*args, where=None):
 def export():
     output = ROOT / "android/source-support"
     output.mkdir(parents=True, exist_ok=True)
+    if not (ROOT / "reference/touchHLE/.git").exists():
+        if not (output / "touchHLE.patch").exists():
+            raise RuntimeError("The source snapshot is missing its original runtime patch")
+        print("This published snapshot already includes complete sources and exported patches")
+        return
     (output / "touchHLE.patch").write_bytes(git("diff", "--binary", BASE, "--", ".", ":!vendor/SDL"))
     (output / "SDL-ndk28.patch").write_bytes(git("diff", "--binary", where=ROOT / "reference/touchHLE/vendor/SDL"))
     for name in ["build_android_runtime.ps1", "build_android_apk.py", "android_cmake.cmd",

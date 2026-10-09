@@ -1,0 +1,2 @@
+# Keep exported source and patch bytes stable across checkout platforms.
+* -text

@@ -51,7 +51,7 @@ def prepare():
     if (SNAPSHOT / '.git').exists():
         raise RuntimeError('Snapshot repository already exists; inspect it before publishing again.')
     SNAPSHOT.mkdir(parents=True, exist_ok=True)
-    for name in ['.gitignore', 'README.md', 'BUILD.md', 'THIRD_PARTY_NOTICES.md',
+    for name in ['.gitignore', '.gitattributes', 'README.md', 'BUILD.md', 'THIRD_PARTY_NOTICES.md',
                  'RELEASE_NOTES.md', 'requirements.txt']:
         copy(name)
     for path in (ROOT / 'tools').iterdir():
@@ -113,6 +113,7 @@ def prepare():
                 'release_assets': {p.name: {'size': p.stat().st_size, 'sha256': sha256(p)} for p in ASSETS}}
     (SNAPSHOT / 'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     git('init', '-b', 'main', cwd=SNAPSHOT)
+    git('config', 'core.autocrlf', 'false', cwd=SNAPSHOT)
     git('add', '--force', '.', cwd=SNAPSHOT)
     for item in links:
         git('update-index', '--add', '--cacheinfo', '160000,' + item['commit'] + ',' + item['path'], cwd=SNAPSHOT)

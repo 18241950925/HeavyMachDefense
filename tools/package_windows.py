@@ -12,14 +12,21 @@ ROOT = Path(__file__).resolve().parents[1]
 def package():
     source = ROOT / "reference/touchHLE"
     runtime = ROOT / "windows/runtime"
-    result = subprocess.run(["git", "diff", "--binary", "HEAD"], cwd=str(source),
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    patch = result.stdout.decode("utf-8")
-    new_path = "src/frameworks/foundation/ns_stream.rs"
-    new_source = (source / new_path).read_text(encoding="utf-8").splitlines(True)
-    patch += "diff --git a/{0} b/{0}\nnew file mode 100644\n".format(new_path)
-    patch += "".join(difflib.unified_diff([], new_source, fromfile="/dev/null", tofile="b/" + new_path))
-    (runtime / "compatibility.patch").write_bytes(patch.encode("utf-8"))
+    if (source / ".git").exists():
+        result = subprocess.run(["git", "diff", "--binary", "HEAD"], cwd=str(source),
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        patch = result.stdout.decode("utf-8")
+        new_path = "src/frameworks/foundation/ns_stream.rs"
+        new_source = (source / new_path).read_text(encoding="utf-8").splitlines(True)
+        patch += "diff --git a/{0} b/{0}\nnew file mode 100644\n".format(new_path)
+        patch += "".join(difflib.unified_diff([], new_source, fromfile="/dev/null", tofile="b/" + new_path))
+        (runtime / "compatibility.patch").write_bytes(patch.encode("utf-8"))
+    else:
+        # The published tree has complete current runtime sources and a separate
+        # historical patch for the existing Windows release. Do not replace that
+        # patch with a diff of the containing project repository.
+        if not (runtime / "compatibility.patch").exists():
+            raise RuntimeError("Missing Windows runtime source provenance")
     support = runtime / "source-support"
     support.mkdir(exist_ok=True)
     for name in ("launcher.cpp", "launcher.rc", "game.ico", "prepare_windows.py", "macho.py",
