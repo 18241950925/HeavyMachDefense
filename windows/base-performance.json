@@ -1,0 +1,11 @@
+{
+  "seconds_to_visible_menu": 5.3013584,
+  "menu_visible": true,
+  "reference_pixel_mean_error": 5.252877613342729,
+  "logical_sample": [
+    50,
+    343,
+    260,
+    359
+  ]
+}

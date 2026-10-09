@@ -72,7 +72,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
         return 0;
     }
     std::wstring command = L"\"" + executable + L"\" \"" + game +
-        L"\" --device-family=iphone --preferred-languages=en --no-error-popup --scale-hack=" +
+        L"\" --device-family=iphone --preferred-languages=zh,en --no-error-popup --scale-hack=" +
         std::to_wstring(scale);
     if (fullscreen) command += L" --fullscreen";
 
@@ -90,7 +90,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
         std::string display = std::string("Windows display: ") + (fullscreen ? "fullscreen" : "windowed") +
             ", render_scale=" + std::to_string(scale) + ", internal_resolution=" +
             std::to_string(320 * scale) + "x" + std::to_string(480 * scale) +
-            ", DPI=permonitorv2\n";
+            ", DPI=permonitorv2, preferred_languages=zh,en, edition=1.0.3-zh4\n";
         DWORD written = 0;
         WriteFile(log, display.data(), static_cast<DWORD>(display.size()), &written, nullptr);
     }

@@ -88,6 +88,16 @@ def verify():
     for name in ("msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll"):
         if not (ROOT / "windows/runtime" / name).is_file():
             raise ValueError("Missing runtime dependency: " + name)
+    launcher = (ROOT / "windows/HeavyMachDefense.exe").read_bytes()
+    if "--preferred-languages=zh,en".encode("utf-16-le") not in launcher:
+        raise ValueError("Windows launcher does not enable the Chinese edition")
+    fonts = {}
+    for name in ("MechSansSC-Medium.ttf", "MechSansSC-Bold.ttf", "LICENSE.noto-sc"):
+        bundled = ROOT / "windows/runtime/touchHLE_fonts" / name
+        original = ROOT / "android/chinese-fonts" / name
+        if bundled.read_bytes() != original.read_bytes():
+            raise ValueError("Windows Chinese font or license differs from Android: " + name)
+        fonts[name] = sha256(bundled)
     report = {
         "ipa_sha256": sha256(ipa),
         "prepared_game_sha256": sha256(app / "MachDefense"),
@@ -98,6 +108,10 @@ def verify():
         "unchanged_files": untouched,
         "modified_files": changed,
         "windows_x64_binaries_sha256": binaries,
+        "edition": "1.0.3-zh4",
+        "preferred_languages": ["zh", "en"],
+        "chinese_fonts_sha256": fonts,
+        "chinese_fonts_match_android": True,
     }
     (ROOT / "windows/integrity.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     if args.save:

@@ -44,4 +44,6 @@ python tools/build_android_apk.py
 
 `tools/build_runtime.ps1` 编译兼容层，`tools/build_launcher.ps1` 编译启动器；`tools/verify_windows.py` 和 `tools/package_windows.py` 用于检查并生成便携 ZIP。运行目录还需要 touchHLE 字体、动态库、配置文件和 Microsoft Visual C++ 运行库，布局见游玩包。
 
-当前 Release 的 Windows 包保留已有英文运行版本，其对应上游版本和改动见 `windows/runtime/SOURCE.md`、`windows/runtime/compatibility.patch`。最新源码快照包含 Android 后续修复；它与现有 Windows Release 的运行程序版本不同。Windows ZIP 已验证第一关战斗和存档重读，Android 真机运行仍待验证。
+中文 Windows 版还需要把 `android/chinese-fonts/` 中的两款 `MechSansSC-*.ttf`、`LICENSE.noto-sc` 与 `source.json` 复制到 `windows/runtime/touchHLE_fonts/`。构建后的 `reference/touchHLE/target/release/touchHLE.exe` 应复制到 `windows/runtime/touchHLE.exe` 后再检查和打包。
+
+当前 Release 的 Windows 中文高清包已经同步 Android `1.0.3-zh4` 的共用兼容层、汉化、中文字体和绘制优化；启动器使用 `--preferred-languages=zh,en`。对应上游版本和改动见 `windows/runtime/SOURCE.md`、`windows/runtime/compatibility.patch`。Windows ZIP 已验证第一关战斗和存档重读，Android 真机运行仍待验证。

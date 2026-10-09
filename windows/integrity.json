@@ -107,7 +107,18 @@
     "MachDefense.app/MachDefense"
   ],
   "windows_x64_binaries_sha256": {
-    "HeavyMachDefense.exe": "62c688dd4c78e1724de661622abec0e71990b13bbdfad23b84aa489d83bfa13a",
-    "runtime/touchHLE.exe": "576e8d3e99b4f415e7a1e2815f3561f4de55bea6dba39f9a1c2af76e04974215"
-  }
+    "HeavyMachDefense.exe": "ddfb5b9a389b7425a4595094fb0d30c0e1546e19c52301dfa76df949e73682d3",
+    "runtime/touchHLE.exe": "9f0add8e60676ba30a4cc2a143d6e98dc8997d8cbd5c92f4550c6315c351b746"
+  },
+  "edition": "1.0.3-zh4",
+  "preferred_languages": [
+    "zh",
+    "en"
+  ],
+  "chinese_fonts_sha256": {
+    "MechSansSC-Medium.ttf": "d545122a049cccbfdf7a63a1a967d2b2d74056e2188bd40dc66a2f50e8324e71",
+    "MechSansSC-Bold.ttf": "d4d00bbc980824f2fc419829ae6c21b8c70dd15cd483a42a642987f43c386248",
+    "LICENSE.noto-sc": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+  },
+  "chinese_fonts_match_android": true
 }

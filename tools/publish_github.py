@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / '.publish/HeavyMachDefense'
 OWNER = '18241950925'
 NAME = 'HeavyMachDefense'
-TAG = 'v1.0.3-zh4'
+TAG = 'v1.0.3-zh4.1'
 ASSETS = [ROOT / 'HeavyMachDefense-Windows.zip',
           ROOT / 'HeavyMachDefense-Windows.zip.sha256',
           ROOT / 'android/HeavyMachDefense-arm64.apk',
@@ -47,9 +47,12 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def prepare():
-    if (SNAPSHOT / '.git').exists():
+def prepare(update=False):
+    existing = (SNAPSHOT / '.git').exists()
+    if existing and not update:
         raise RuntimeError('Snapshot repository already exists; inspect it before publishing again.')
+    if update and not existing:
+        raise RuntimeError('No snapshot repository to update; prepare it first.')
     SNAPSHOT.mkdir(parents=True, exist_ok=True)
     for name in ['.gitignore', '.gitattributes', 'README.md', 'BUILD.md', 'THIRD_PARTY_NOTICES.md',
                  'RELEASE_NOTES.md', 'requirements.txt']:
@@ -112,11 +115,15 @@ def prepare():
                 'runtime_file_sha256': files, 'submodules': links,
                 'release_assets': {p.name: {'size': p.stat().st_size, 'sha256': sha256(p)} for p in ASSETS}}
     (SNAPSHOT / 'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-    git('init', '-b', 'main', cwd=SNAPSHOT)
+    if not existing:
+        git('init', '-b', 'main', cwd=SNAPSHOT)
     git('config', 'core.autocrlf', 'false', cwd=SNAPSHOT)
     git('add', '--force', '.', cwd=SNAPSHOT)
     for item in links:
         git('update-index', '--add', '--cacheinfo', '160000,' + item['commit'] + ',' + item['path'], cwd=SNAPSHOT)
+        # These dependencies are represented by pinned links in the exported
+        # repository; their source checkouts remain in the original workspace.
+        git('update-index', '--assume-unchanged', item['path'], cwd=SNAPSHOT)
     staged = git('ls-files', '-z', cwd=SNAPSHOT).decode().split('\0')
     denied = ('.keystore', '.jks', '.sav', '.apk', '.zip', '.pdb', '.log')
     for name in staged:
@@ -125,7 +132,9 @@ def prepare():
     git('diff', '--cached', '--check', '--', 'README.md', 'BUILD.md',
         'THIRD_PARTY_NOTICES.md', 'RELEASE_NOTES.md', 'tools/publish_github.py',
         'tools/prepare_dependencies.py', cwd=SNAPSHOT)
-    git('commit', '-m', 'Publish Windows port and Android Chinese fixes with build sources', cwd=SNAPSHOT)
+    message = ('Sync Windows Chinese HD runtime and Android rendering optimizations'
+               if existing else 'Publish Windows port and Android Chinese fixes with build sources')
+    git('commit', '-m', message, cwd=SNAPSHOT)
     (ROOT / '.publish/manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     print('Prepared source snapshot:', len([x for x in staged if x]), 'tracked entries', flush=True)
 
@@ -217,11 +226,20 @@ def publish(private):
             raise
         release = api(token, 'POST', repo_path + '/releases', {
             'tag_name': TAG, 'target_commitish': commit, 'draft': True, 'prerelease': False,
-            'name': 'Heavy MACH: Defense — Windows + Android 1.0.3-zh4',
+            'name': 'Windows 中文高清版 + Android 1.0.3-zh4',
             'body': (ROOT / 'RELEASE_NOTES.md').read_text(encoding='utf-8')})
     outputs = [upload(token, release, path) for path in ASSETS]
     if release['draft']:
         release = api(token, 'PATCH', repo_path + '/releases/' + str(release['id']), {'draft': False, 'make_latest': 'true'})
+    release = api(token, 'GET', repo_path + '/releases/tags/' + TAG)
+    if release['draft']:
+        raise RuntimeError('Release is still a draft after publication.')
+    # Draft download URLs use an untagged identifier; read them again after
+    # publication so the saved record contains the public tag URLs.
+    names = {path.name for path in ASSETS}
+    outputs = [item for item in release['assets'] if item['name'] in names]
+    if len(outputs) != len(ASSETS):
+        raise RuntimeError('The published release is missing a package or checksum.')
     record = {'repository': repo['html_url'], 'private': repo['private'], 'commit': commit,
               'release': release['html_url'], 'tag': TAG,
               'assets': [{'name': item['name'], 'size': item['size'], 'digest': item['digest'],
@@ -233,11 +251,14 @@ def publish(private):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--prepare', action='store_true')
+    parser.add_argument('--update', action='store_true')
     parser.add_argument('--publish', action='store_true')
     parser.add_argument('--private', action='store_true')
     args = parser.parse_args()
     if args.prepare:
         prepare()
+    if args.update:
+        prepare(update=True)
     if args.publish:
         publish(args.private)
 

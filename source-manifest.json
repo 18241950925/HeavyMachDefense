@@ -446,12 +446,12 @@
   ],
   "release_assets": {
     "HeavyMachDefense-Windows.zip": {
-      "size": 88870957,
-      "sha256": "1bb37a0e78bd77c9448907aa33c28a99acbee505a79c4027ca9d5bbe52aeb774"
+      "size": 105914474,
+      "sha256": "0bc15c3f203bf5b92071165ea59e7355f69afe0b0bb28307b96a4ff58e208aad"
     },
     "HeavyMachDefense-Windows.zip.sha256": {
       "size": 96,
-      "sha256": "01457902662f6008339a7581c1b12af17fb9e52dca2fe46b256bffdc43cd2f37"
+      "sha256": "0d3bd007aae0e766947b5475adc601c8ffc46aa42fd181122add198677cd00c4"
     },
     "HeavyMachDefense-arm64.apk": {
       "size": 93228700,

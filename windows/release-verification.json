@@ -1,0 +1,38 @@
+{
+  "edition": "1.0.3-zh4",
+  "release_tag": "v1.0.3-zh4.1",
+  "date": "2026-10-09",
+  "platform": "Windows x64",
+  "runtime_source_matches_android_zh4": true,
+  "runtime_patch_sha256": "ed7eca0d94f4c9ff66f712883093bfbf0e1752cfd686e41251d1cc911497e15c",
+  "test_runtime_sha256": "9f0add8e60676ba30a4cc2a143d6e98dc8997d8cbd5c92f4550c6315c351b746",
+  "shipped_runtime_sha256": "9f0add8e60676ba30a4cc2a143d6e98dc8997d8cbd5c92f4550c6315c351b746",
+  "shipped_launcher_sha256": "ddfb5b9a389b7425a4595094fb0d30c0e1546e19c52301dfa76df949e73682d3",
+  "fullscreen_internal_resolution": [
+    1280,
+    1920
+  ],
+  "automatic_window_client_size": [
+    640,
+    960
+  ],
+  "chinese_font_coverage_checked": true,
+  "right_mech_icons_checked": 4,
+  "skill_icons_checked": 3,
+  "purchase_cancel_callbacks_observed": 2,
+  "battle_continued_after_purchase": true,
+  "mech_production_and_combat_observed": true,
+  "help_checked": true,
+  "save_exit_and_restart_checked": true,
+  "reloaded_slot_currency_cr": 33,
+  "test_save": {
+    "size": 42496,
+    "checksum": 18574,
+    "checksum_valid": true
+  },
+  "base_menu_first_seconds": 5.3013584,
+  "base_menu_reopen_seconds": 2.6360867000000003,
+  "base_menu_timing_includes_animation": true,
+  "player_save_unchanged": true,
+  "android_apk_unchanged": true
+}

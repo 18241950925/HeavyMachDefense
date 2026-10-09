@@ -4,12 +4,12 @@
 
 | 平台 | 下载文件 | 当前版本 |
 | --- | --- | --- |
-| Windows x64 | `HeavyMachDefense-Windows.zip` | 英文便携版，支持自动分辨率、全屏和 DPI 缩放 |
+| Windows x64 | `HeavyMachDefense-Windows.zip` | `1.0.3-zh4` 中文高清便携版，支持自动分辨率、全屏和 DPI 缩放 |
 | Android ARM64 | `HeavyMachDefense-arm64.apk` | `1.0.3-zh4` 中文修复版，Android 5.0 及以上 |
 
 Android 安装和画质设置见 [android/安装说明.md](android/安装说明.md)。本地安装包仍位于 `android/HeavyMachDefense-arm64.apk`；已安装旧版时直接覆盖安装，保留存档。目前尚未进行安卓真机测试。
 
-Android 包含汉化、简体字和高清文字、机甲图标及购买按钮卡住修复，并优化首次基地升级加载。当前 Windows Release 保留现有英文运行版本，尚未同步这些后续修复。
+Windows 与 Android 均包含汉化、简体字和高清文字、机甲及技能图标、购买按钮卡住修复，并优化首次基地升级加载。Windows 新版已同步共用兼容层；更新时保留原目录的 `runtime/touchHLE_sandbox` 存档文件夹。
 
 工作区原文件为 `MachDefense v1.0.3 - (com.wemadeent.HeavyMachDefence).ipa`。Info.plist 确认最低系统版本为 iOS 4.3，程序为未加密的 ARMv7 Mach-O。
 
@@ -24,7 +24,7 @@ Windows 游玩包解压后运行 `HeavyMachDefense.exe`，操作说明见 [windo
 源码与目录（GitHub 仓库不包含本地原 IPA、存档、签名密钥及开发工具缓存）：
 
 - `original/`：本地 IPA 解包内容，用于分析和校验。
-- `windows/`：本地运行目录；仓库保留显示配置、操作说明、验证记录及历史兼容层补丁。
+- `windows/`：本地运行目录；仓库保留显示配置、操作说明、验证记录及当前兼容层补丁。
 - `tools/prepare_windows.py`：从原 IPA 重新生成适配游戏包，按原程序 SHA-256 检查版本。
 - `tools/launcher.cpp`：Windows 启动器源码。
 - `tools/build_launcher.ps1`：使用 MinGW 编译启动器及图标。

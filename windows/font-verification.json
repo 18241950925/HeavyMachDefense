@@ -1,0 +1,14 @@
+{
+  "caption_chinese_character_count": 281,
+  "fonts_match_android": true,
+  "fonts": {
+    "MechSansSC-Medium.ttf": {
+      "sha256": "d545122a049cccbfdf7a63a1a967d2b2d74056e2188bd40dc66a2f50e8324e71",
+      "missing_chinese_glyphs": 0
+    },
+    "MechSansSC-Bold.ttf": {
+      "sha256": "d4d00bbc980824f2fc419829ae6c21b8c70dd15cd483a42a642987f43c386248",
+      "missing_chinese_glyphs": 0
+    }
+  }
+}
